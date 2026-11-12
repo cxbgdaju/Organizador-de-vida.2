@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#f5f6f8">
+<meta name="description" content="Tu espacio personal para organizar tareas, compras y recordatorios.">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<title>MiOrganizador</title>
+<style>
+:root{--bg:#f5f6f8;--surface:#fff;--ink:#20242c;--muted:#777f8c;--line:#e8eaf0;--accent:#5267e8;--accent-soft:#edf0ff;--green:#21845b;--red:#c34b55;--shadow:0 8px 28px rgba(25,35,60,.06)}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+button,input,select{font:inherit}button{cursor:pointer;border:0}
+.app{max-width:760px;margin:auto;min-height:100dvh;padding:22px 17px 100px}
+header{display:flex;justify-content:space-between;align-items:center;margin:6px 0 25px}
+.brand{font-size:21px;font-weight:800;letter-spacing:-.6px}.brand span{color:var(--accent)}
+.date{color:var(--muted);font-size:12px;margin-top:3px}
+.avatar{width:40px;height:40px;border-radius:14px;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;font-weight:800}
+h1{font-size:27px;line-height:1.15;letter-spacing:-.8px;margin:0 0 6px}.sub{color:var(--muted);margin:0 0 20px}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:20px 0}
+.stat,.panel{background:var(--surface);border:1px solid var(--line);border-radius:19px;padding:16px;box-shadow:var(--shadow)}
+.stat small{color:var(--muted)}.stat strong{display:block;font-size:27px;margin-top:5px;letter-spacing:-1px}
+.section-head{display:flex;justify-content:space-between;align-items:center;margin:24px 2px 12px}
+.section-head h2{font-size:17px;margin:0}.muted{color:var(--muted);font-size:13px}
+.tabs{display:flex;gap:8px;overflow:auto;padding:3px 0 13px;scrollbar-width:none}
+.tab{background:#fff;border:1px solid var(--line);padding:9px 14px;border-radius:999px;color:var(--muted);white-space:nowrap}
+.tab.active{background:var(--ink);color:#fff;border-color:var(--ink)}
+.panel{padding:15px;margin-bottom:12px}
+.row{display:flex;align-items:center;gap:11px}.grow{flex:1;min-width:0}
+.item{display:flex;align-items:center;gap:11px;padding:12px 2px;border-bottom:1px solid var(--line)}.item:last-child{border:0}
+.check{width:21px;height:21px;border:1.7px solid #c8cdd7;border-radius:7px;background:white;flex:none;display:grid;place-items:center;color:white}
+.check.done{background:var(--green);border-color:var(--green)}
+.item-title{font-weight:600;overflow-wrap:anywhere}.item-title.done{text-decoration:line-through;color:#9aa1ad}
+.meta{font-size:12px;color:var(--muted);margin-top:2px}
+.pill{font-size:11px;border-radius:99px;padding:4px 8px;background:var(--accent-soft);color:var(--accent)}
+.add{width:100%;display:flex;gap:8px;align-items:center;justify-content:center;background:var(--accent);color:#fff;padding:13px;border-radius:14px;font-weight:700;margin-top:12px}
+.field{width:100%;border:1px solid var(--line);border-radius:12px;padding:12px;background:#fff;color:var(--ink);outline:none}
+.field:focus{border-color:var(--accent);box-shadow:0 0 0 3px #5267e81c}
+.form{display:grid;gap:9px}.form.two{grid-template-columns:1fr 1fr}
+.actions{display:flex;gap:8px}.secondary{background:var(--accent-soft);color:var(--accent);padding:10px 13px;border-radius:11px;font-weight:650}
+.danger{background:#fff0f0;color:var(--red);padding:8px 10px;border-radius:10px}
+.empty{text-align:center;color:var(--muted);padding:26px 10px}.empty b{display:block;color:var(--ink);margin-bottom:4px}
+.bottom{position:fixed;bottom:0;left:0;right:0;background:#ffffffed;backdrop-filter:blur(15px);border-top:1px solid var(--line);padding:9px max(16px,calc((100vw - 720px)/2)) calc(9px + env(safe-area-inset-bottom));display:flex;justify-content:space-around;z-index:5}
+.nav{background:none;color:var(--muted);display:grid;justify-items:center;gap:3px;font-size:11px;padding:4px 10px}.nav span{font-size:20px}.nav.active{color:var(--accent);font-weight:750}
+.hidden{display:none!important}
+.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#20242c;color:#fff;padding:11px 16px;border-radius:12px;z-index:10;box-shadow:var(--shadow);max-width:90%;text-align:center}
+@media(min-width:600px){.app{padding-top:32px}.stats{grid-template-columns:repeat(4,1fr)}}
+</style>
+</head>
+<body>
+<div class="app">
+<header><div><div class="brand">mi<span>organizador</span></div><div class="date" id="todayLabel"></div></div><div class="avatar">MO</div></header>
+<main>
+<section id="homeView">
+<h1>Hola, ¿qué vamos a organizar?</h1><p class="sub">Un espacio sencillo para tener tu día bajo control.</p>
+<div class="stats">
+<div class="stat"><small>📌 Tareas pendientes</small><strong id="pendingCount">0</strong></div>
+<div class="stat"><small>✓ Completadas</small><strong id="doneCount">0</strong></div>
+<div class="stat"><small>🛒 Por comprar</small><strong id="shoppingCount">0</strong></div>
+<div class="stat"><small>⏰ Recordatorios</small><strong id="reminderCount">0</strong></div>
+</div>
+<div class="section-head"><h2>Lo próximo</h2><span class="muted">Tus tareas</span></div>
+<div class="panel" id="homeTasks"></div>
+<button class="add" onclick="showView('tasks')">＋ Añadir una tarea</button>
+</section>
+
+<section id="tasksView" class="hidden">
+<h1>Mis tareas</h1><p class="sub">Organiza tus pendientes y marca lo que termines.</p>
+<div class="panel form">
+<input id="taskName" class="field" placeholder="¿Qué necesitas hacer?" maxlength="100">
+<div class="form two"><select id="taskPriority" class="field"><option value="Normal">Prioridad normal</option><option value="Alta">Prioridad alta</option><option value="Baja">Prioridad baja</option></select><input id="taskDate" class="field" type="date"></div>
+<button class="add" onclick="addTask()">＋ Guardar tarea</button>
+</div>
+<div class="section-head"><h2>Lista de tareas</h2><span class="muted" id="taskTotal"></span></div>
+<div class="panel" id="taskList"></div>
+</section>
+
+<section id="shoppingView" class="hidden">
+<h1>Lista de compras</h1><p class="sub">Lleva el control de lo que necesitas comprar.</p>
+<div class="panel form">
+<input id="shopName" class="field" placeholder="Ej. Leche, arroz, bananos..." maxlength="80">
+<div class="form two"><input id="shopQty" class="field" placeholder="Cantidad (ej. 2 bolsas)"><input id="shopPrice" class="field" type="number" min="0" step="100" placeholder="Precio opcional"></div>
+<button class="add" onclick="addShopping()">＋ Agregar producto</button>
+</div>
+<div class="section-head"><h2>Por comprar</h2><span class="muted" id="shopTotal"></span></div>
+<div class="panel" id="shoppingList"></div>
+</section>
+
+<section id="remindersView" class="hidden">
+<h1>Recordatorios</h1><p class="sub">Programa avisos para no olvidar lo importante.</p>
+<div class="panel form">
+<input id="reminderName" class="field" placeholder="¿Qué no quieres olvidar?" maxlength="100">
+<div class="form two"><input id="reminderDate" class="field" type="date"><input id="reminderTime" class="field" type="time"></div>
+<button class="add" onclick="addReminder()">＋ Crear recordatorio</button>
+<button class="secondary" onclick="enableNotifications()">Activar notificaciones</button>
+<p class="muted">En esta primera versión, los avisos se comprueban mientras la aplicación está abierta. Para avisos fiables incluso cerrada necesitaremos añadir un servicio de notificaciones.</p>
+</div>
+<div class="section-head"><h2>Programados</h2></div><div class="panel" id="reminderList"></div>
+</section>
+</main>
+</div>
+<nav class="bottom">
+<button class="nav active" data-view="home" onclick="showView('home')"><span>⌂</span>Inicio</button>
+<button class="nav" data-view="tasks" onclick="showView('tasks')"><span>☷</span>Tareas</button>
+<button class="nav" data-view="shopping" onclick="showView('shopping')"><span>🛒</span>Compras</button>
+<button class="nav" data-view="reminders" onclick="showView('reminders')"><span>◷</span>Avisos</button>
+</nav>
+<div id="toast" class="toast hidden"></div>
+<script>
+const $=id=>document.getElementById(id);
+const load=(key)=>{try{return JSON.parse(localStorage.getItem(key)||"[]")}catch{return[]}};
+const save=(key,data)=>localStorage.setItem(key,JSON.stringify(data));
+let tasks=load("mo_tasks"), shopping=load("mo_shopping"), reminders=load("mo_reminders"), alerted=[];
+const today=new Date(); $("todayLabel").textContent=today.toLocaleDateString("es-CO",{weekday:"long",day:"numeric",month:"long"});
+function toast(msg){$("toast").textContent=msg;$("toast").classList.remove("hidden");setTimeout(()=>$("toast").classList.add("hidden"),2300)}
+function showView(v){["home","tasks","shopping","reminders"].forEach(x=>$(x+"View").classList.toggle("hidden",x!==v));document.querySelectorAll(".nav").forEach(b=>b.classList.toggle("active",b.dataset.view===v));render()}
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function taskHTML(t){return `<div class="item"><button class="check ${t.done?"done":""}" onclick="toggleTask('${t.id}')">${t.done?"✓":""}</button><div class="grow"><div class="item-title ${t.done?"done":""}">${escapeHtml(t.name)}</div><div class="meta">${t.date?new Date(t.date+"T12:00:00").toLocaleDateString("es-CO"):"Sin fecha"} · ${escapeHtml(t.priority)}</div></div><button class="danger" onclick="removeTask('${t.id}')">×</button></div>`}
+function render(){const pending=tasks.filter(t=>!t.done), done=tasks.filter(t=>t.done);$("pendingCount").textContent=pending.length;$("doneCount").textContent=done.length;$("shoppingCount").textContent=shopping.filter(x=>!x.done).length;$("reminderCount").textContent=reminders.length;
+$("homeTasks").innerHTML=pending.slice(0,4).map(taskHTML).join("")||'<div class="empty"><b>Todo despejado ✨</b>No tienes tareas pendientes.</div>';
+$("taskList").innerHTML=tasks.length?tasks.map(taskHTML).join(""):'<div class="empty"><b>Aún no hay tareas</b>Agrega tu primer pendiente.</div>';$("taskTotal").textContent=tasks.length+" en total";
+$("shoppingList").innerHTML=shopping.length?shopping.map(x=>`<div class="item"><button class="check ${x.done?"done":""}" onclick="toggleShop('${x.id}')">${x.done?"✓":""}</button><div class="grow"><div class="item-title ${x.done?"done":""}">${escapeHtml(x.name)}</div><div class="meta">${escapeHtml(x.qty||"")}${x.price? " · $"+Number(x.price).toLocaleString("es-CO"):""}</div></div><button class="danger" onclick="removeShop('${x.id}')">×</button></div>`).join(""):'<div class="empty"><b>Tu lista está vacía</b>Agrega lo que necesitas comprar.</div>';$("shopTotal").textContent=shopping.filter(x=>!x.done).length+" pendientes";
+$("reminderList").innerHTML=reminders.length?reminders.sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time)).map(r=>`<div class="item"><div class="grow"><div class="item-title">${escapeHtml(r.name)}</div><div class="meta">${r.date} · ${r.time}</div></div><button class="danger" onclick="removeReminder('${r.id}')">×</button></div>`).join(""):'<div class="empty"><b>Sin recordatorios</b>Programa tu primer aviso.</div>'}
+function addTask(){let name=$("taskName").value.trim();if(!name)return toast("Escribe una tarea primero.");tasks.unshift({id:crypto.randomUUID(),name,priority:$("taskPriority").value,date:$("taskDate").value,done:false});save("mo_tasks",tasks);$("taskName").value="";$("taskDate").value="";render();toast("Tarea guardada.")}
+function toggleTask(id){tasks=tasks.map(t=>t.id===id?{...t,done:!t.done}:t);save("mo_tasks",tasks);render()}
+function removeTask(id){tasks=tasks.filter(t=>t.id!==id);save("mo_tasks",tasks);render()}
+function addShopping(){let name=$("shopName").value.trim();if(!name)return toast("Escribe un producto.");shopping.unshift({id:crypto.randomUUID(),name,qty:$("shopQty").value.trim(),price:$("shopPrice").value,done:false});save("mo_shopping",shopping);$("shopName").value="";$("shopQty").value="";$("shopPrice").value="";render();toast("Producto agregado.")}
+function toggleShop(id){shopping=shopping.map(x=>x.id===id?{...x,done:!x.done}:x);save("mo_shopping",shopping);render()}
+function removeShop(id){shopping=shopping.filter(x=>x.id!==id);save("mo_shopping",shopping);render()}
+function addReminder(){let name=$("reminderName").value.trim(),date=$("reminderDate").value,time=$("reminderTime").value;if(!name||!date||!time)return toast("Completa el nombre, la fecha y la hora.");let when=new Date(date+"T"+time);if(when<=new Date())return toast("Elige una hora futura.");reminders.push({id:crypto.randomUUID(),name,date,time});save("mo_reminders",reminders);$("reminderName").value="";render();toast("Recordatorio creado.")}
+function removeReminder(id){reminders=reminders.filter(r=>r.id!==id);save("mo_reminders",reminders);render()}
+async function enableNotifications(){if(!("Notification"in window))return toast("Este navegador no admite notificaciones.");let p=await Notification.requestPermission();toast(p==="granted"?"Notificaciones permitidas.":"No se concedió el permiso.")}
+function checkReminders(){if(!("Notification"in window)||Notification.permission!=="granted")return;let now=new Date();reminders.forEach(r=>{let key=r.id+"-"+r.date+"-"+r.time,when=new Date(r.date+"T"+r.time);if(now>=when&&!alerted.includes(key)){new Notification("MiOrganizador",{body:r.name});alerted.push(key)}})}
+setInterval(checkReminders,15000);render();
+if("serviceWorker"in navigator && location.protocol.startsWith("http"))navigator.serviceWorker.register("./sw.js").catch(()=>{});
+</script>
+</body></html>
